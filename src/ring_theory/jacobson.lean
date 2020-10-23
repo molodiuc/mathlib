@@ -255,95 +255,32 @@ theorem is_jacobson_of_eisenbud
   : is_jacobson R :=
 begin
   rw is_jacobson_iff_prime_eq,
-  introsI Q hQ,
-  refine le_antisymm _ le_jacobson,
-  refine λ x hx, classical.by_contradiction (λ hx', _),
-  let S := {P : ideal R | P.is_prime ∧ Q ≤ P ∧ x ∉ P},
-  have : Q ∈ S, {
-    refine ⟨by apply_instance, le_refl Q, hx'⟩,
-  },
-  rcases zorn.zorn_partial_order₀ {P : ideal R | P.is_prime ∧ Q ≤ P ∧ x ∉ P}
-     _ Q ⟨by apply_instance, le_refl Q, hx'⟩
-     with ⟨P, hP, hQP, h⟩,
-  haveI : P.is_prime := hP.1,
-  specialize H P,
-  refine absurd (H _ : P.is_maximal) _,
-  {
-    refine ⟨x, (λ hx'', hx' (hx''.symm ▸ Q.zero_mem)), _⟩,
-
-    -- rw is_maximal_iff,
-    refine ⟨_, _⟩,
-    {
-      refine (is_prime_of_is_prime_disjoint _ _ hP.1 _).1,
-      rw disjoint_powers_iff_not_mem _,
-      refine hP.2.2,
-      refine is_prime.radical hP.1,
-    },
-    {
-      -- must lie in a maximal (hence prime) ideal not containing x
-      refine maximal_of_no_maximal _,
-      refine λ J hJ hJ_max, _,
+  refine λ Q hQ, le_antisymm (λ x hx, classical.by_contradiction (λ hx', _)) le_jacobson,
+  obtain ⟨P, ⟨hP_prime, hP, hPx⟩, hQP, h⟩ := zorn.zorn_partial_order₀
+    {P : ideal R | P.is_prime ∧ Q ≤ P ∧ x ∉ P} _ Q ⟨hQ, le_refl Q, hx'⟩,
+  { haveI : P.is_prime := hP_prime,
+    refine absurd (H P _ : P.is_maximal) (λ hP_max, hPx ((mem_Inf.1 hx) ⟨hP, hP_max⟩)),
+    { refine ⟨x, (λ hx'', hx' (hx''.symm ▸ Q.zero_mem)), ⟨(is_prime_of_is_prime_disjoint _ _ hP_prime
+        (by rwa disjoint_powers_iff_not_mem (is_prime.radical hP_prime))).1, _⟩⟩,
+      refine maximal_of_no_maximal (λ J hJ hJ_max, _),
       haveI hJ_prime : J.is_prime := is_maximal.is_prime hJ_max,
       have hJp := is_maximal.is_prime hJ_max,
       rw is_prime_iff_is_prime_disjoint (localization.of (submonoid.powers x)) at hJp,
       have := hJp.right,
       rw disjoint_powers_iff_not_mem (is_prime.radical (comap_is_prime _ J)) at this,
-
-      specialize h (comap (localization.of (submonoid.powers x)).to_map J),
-      specialize h ⟨comap_is_prime _ J, (by {
-        refine le_trans hQP _,
-        refine le_trans le_comap_map (comap_mono (le_of_lt hJ)),
-      }), this⟩ (by {
-        refine le_trans le_comap_map (comap_mono (le_of_lt hJ)),
-      }),
-
-      refine hJ.2 _,
-      rw ← h,
-      rw map_comap (localization.of (submonoid.powers x)),
-      refine le_refl J,
-    }
-  },
-  {
-    intro hP_max,
-    refine hP.2.2 _,
-    refine (mem_Inf.1 hx) ⟨hP.2.1, hP_max⟩,
-  },
-  {
-    intros S SC cC I IS,
-    have hxS : x ∉ Sup S := by {
-      refine λ hxS, _,
-      rw (submodule.mem_Sup_of_directed ⟨I, IS⟩ cC.directed_on) at hxS,
-      obtain ⟨J, hJ, hJxy⟩ := hxS,
-      refine (SC hJ).2.2 hJxy,
-    },
-    refine ⟨Sup S, ⟨_, _, hxS⟩, λ z, le_Sup⟩,
-    {
-      refine ⟨_, _⟩,
-      {
-        refine ne_of_lt ⟨le_top, λ hS, _⟩,
-        refine absurd (hS (by simp)) hxS,
-      },
-      {
-        intros x y hxy,
-        rw (submodule.mem_Sup_of_directed ⟨I, IS⟩ cC.directed_on) at hxy,
-        obtain ⟨J, hJ, hJxy⟩ := hxy,
-        rcases (SC hJ).1.2 hJxy,
-        {
-          refine or.inl _,
-          rw (submodule.mem_Sup_of_directed ⟨I, IS⟩ cC.directed_on),
-          refine ⟨J, hJ, h⟩,
-        },
-        {
-          refine or.inr _,
-          rw (submodule.mem_Sup_of_directed ⟨I, IS⟩ cC.directed_on),
-          refine ⟨J, hJ, h⟩,
-        }
-      }
-    },
-    {
-      refine le_trans (SC IS).2.1 (le_Sup IS),
-    },
-  }
+      specialize h (comap (localization.of (submonoid.powers x)).to_map J) ⟨comap_is_prime _ J,
+        (le_trans hQP (le_trans le_comap_map (comap_mono (le_of_lt hJ)))), this⟩
+        (le_trans le_comap_map (comap_mono (le_of_lt hJ))),
+      refine hJ.2 (le_of_eq (by rw [← h, map_comap (localization.of (submonoid.powers x))])) } },
+  { intros S SC cC I IS,
+    have hxS : x ∉ Sup S := λ hxS, let ⟨J, hJ, hJxy⟩ :=
+      (submodule.mem_Sup_of_directed ⟨I, IS⟩ cC.directed_on).1 hxS in (SC hJ).2.2 hJxy,
+    refine ⟨Sup S, ⟨_, le_trans (SC IS).2.1 (le_Sup IS), hxS⟩, λ z, le_Sup⟩,
+    refine ⟨ne_of_lt ⟨le_top, λ hS, absurd (hS (by simp)) hxS⟩, λ x y hxy, _⟩,
+    obtain ⟨J, hJ, hJxy⟩ := (submodule.mem_Sup_of_directed ⟨I, IS⟩ cC.directed_on).1 hxy,
+    refine or.rec_on ((SC hJ).1.2 hJxy)
+      (λ h, or.inl ((submodule.mem_Sup_of_directed ⟨I, IS⟩ cC.directed_on).2 ⟨J, hJ, h⟩))
+      (λ h, or.inr ((submodule.mem_Sup_of_directed ⟨I, IS⟩ cC.directed_on).2 ⟨J, hJ, h⟩)) },
 end
 
 end localization
