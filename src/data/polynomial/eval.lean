@@ -407,6 +407,9 @@ instance map.is_semiring_hom : is_semiring_hom (map f) :=
   map_add := λ _ _, eval₂_add _ _,
   map_mul := λ _ _, map_mul f, }
 
+def map_ring_hom (f : R →+* S) : polynomial R →+* polynomial S :=
+ring_hom.of (map f)
+
 lemma map_list_prod (L : list (polynomial R)) : L.prod.map f = (L.map $ map f).prod :=
 eq.symm $ list.prod_hom _ (monoid_hom.of (map f))
 
