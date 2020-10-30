@@ -1469,6 +1469,15 @@ begin
         f g p hp.2 (hp.1.symm ▸ M.one_mem) } }
 end
 
+lemma mem_map_submonoid_of_mem {R S : Type*} [comm_ring R] [comm_ring S]
+  (f : R →+* S) {M : submonoid R} (x : M) : (f x) ∈ (M.map f : submonoid S) :=
+set.mem_image_of_mem f x.2
+
+lemma is_integral_localization' {R S : Type*} [comm_ring R] [comm_ring S]
+  {f : R →+* S} (hf : f.is_integral) (M : submonoid R) :
+  ((localization.of M).map (mem_map_submonoid_of_mem f) (localization.of (M.map ↑f))).is_integral :=
+@is_integral_localization R _ M S _ _ _ _ _ f.to_algebra _ _ hf
+
 end is_integral
 
 namespace integral_closure

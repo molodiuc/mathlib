@@ -398,6 +398,26 @@ begin
       refine absurd h2 hg0 } },
 end
 
+lemma local_lemma {R S : Type*} [comm_ring R] [integral_domain S]
+  {f : R →+* S} (hf : f.is_integral) (hf' : function.injective f)
+  {Rₘ Sₘ : Type*} [comm_ring Rₘ] [comm_ring Sₘ] (M : submonoid (polynomial R))
+  (ϕ : localization_map M Rₘ)
+  (ϕ' : localization_map (M.map (polynomial.map_ring_hom f) : submonoid (polynomial S)) Sₘ)
+  (hM : (⊥ : ideal Rₘ).is_maximal) :
+  (⊥ : ideal Sₘ).is_maximal :=
+begin
+  letI : integral_domain Sₘ := localization_map.integral_domain_of_le_non_zero_divisors ϕ' sorry,
+  let g : Rₘ →+* Sₘ := ϕ.map (mem_map_submonoid_of_mem (polynomial.map_ring_hom f)) ϕ',
+  have hg : g.is_integral := @is_integral_localization (polynomial R) _ M (polynomial S)
+    _ _ _ _ _ (polynomial.map_ring_hom f).to_algebra _ _ (polynomial_map_integral f hf),
+  have hg' : function.injective g := @localization_algebra_injective (polynomial R) _ M (polynomial S)
+    _ _ _ _ _ (polynomial.map_ring_hom f).to_algebra _ _ (map_injective f hf') sorry,
+  refine @is_maximal_of_is_integral_of_is_maximal_comap' _ _ _ _ g hg (⊥ : ideal Sₘ) bot_prime _,
+  convert hM,
+  refine trans (ring_hom.ker_eq_comap_bot g).symm _,
+  refine (ring_hom.injective_iff_ker_eq_bot g).1 hg',
+end
+
 theorem is_jacobson_polynomial_iff_is_jacobson {R : Type*} [integral_domain R] (H : is_jacobson R) :
   is_jacobson (polynomial R) :=
 begin
@@ -411,31 +431,26 @@ begin
   {
     let K := localization (non_zero_divisors R),
     let φ : fraction_map R K := localization.of (non_zero_divisors R),
+    let b' := b.map φ.to_map,
+    let ϕ' : localization_map.away_map b' _ := localization.of (submonoid.powers b'),
     letI : field K := φ.to_field,
-    have : (⊥ : ideal (polynomial K)).is_maximal := by {
-      sorry,
-      -- rw [hP0] at hP,
-      -- let b' := b.map φ.to_map,
-      -- let M' : submonoid (polynomial K) := (submonoid.powers b).map (polynomial.map_ring_hom φ.to_map),
-      -- let K' := localization (submonoid.powers b'),
-      -- let φ' : localization_map.away_map b' _ := localization.of (submonoid.powers b'),
-      -- have : (⊥ : ideal K').is_maximal := by {
-      --   -- forward along (R[X][b⁻¹] → K[X][b⁻¹]), which is integral since (R → K) is
-      --   sorry,
-      -- },
-      -- haveI : is_jacobson (polynomial K) := is_jacobson_polynomial_of_is_jacobson_field,
-      -- rw is_maximal_iff_is_maximal_disjoint φ' at this,
-      -- convert this.left,
-      -- refine le_antisymm bot_le _,
-      -- refine comap_bot_le_of_injective _ _,
-      -- refine localization_map.injective _ _,
-      -- refine le_non_zero_divisors_of_domain _,
-      -- { rintro ⟨n, hn⟩,
-      --   refine absurd hn (pow_ne_zero n (λ hb0', hb0 ((map_injective φ.to_map
-      --     (localization_map.injective φ (le_refl _))) (trans hb0' (map_zero φ.to_map).symm)))) }
+    suffices : (⊥ : ideal (localization (submonoid.powers b'))).is_maximal,
+    {
+      exfalso,
+      refine not_bot_maximal_polynomial (_ : (⊥ : ideal (polynomial K)).is_maximal),
+      haveI : is_jacobson (polynomial K) := is_jacobson_polynomial_of_is_jacobson_field,
+      rw is_maximal_iff_is_maximal_disjoint ϕ' at this,
+      convert this.left,
+      refine le_antisymm bot_le (comap_bot_le_of_injective ϕ'.to_map
+        (localization_map.injective ϕ' (le_non_zero_divisors_of_domain _))),
+      rintro ⟨n, hn⟩,
+      refine absurd hn (pow_ne_zero n (λ hb0', hb0 ((map_injective φ.to_map
+        (localization_map.injective φ (le_refl _))) (trans hb0' (map_zero φ.to_map).symm))))
     },
-    exfalso,
-    exact not_bot_maximal_polynomial this,
+    rw hP0 at hP,
+
+    -- have : (⊥ : ideal (localization (submonoid.powers b))).is_maximal := hP,
+    -- sorry,
   },
   {
     have : ∃ p ∈ (P.comap ϕ.to_map), p ≠ (0 : polynomial R),
