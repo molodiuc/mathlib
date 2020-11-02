@@ -393,6 +393,11 @@ begin
   exact hp',
 end
 
+lemma is_integral_tower_top_of_is_integral'
+  {R S T : Type*} [comm_ring R] [comm_ring S] [comm_ring T]
+  (f : R →+* S) (g : S →+* T) (hfg : (g.comp f).is_integral) : g.is_integral :=
+sorry
+
 lemma is_integral_quotient_of_is_integral {I : ideal A} (hRA : is_integral R A) :
   is_integral (I.comap (algebra_map R A)).quotient I.quotient :=
 begin

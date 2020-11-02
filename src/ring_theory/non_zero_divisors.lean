@@ -4,7 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kenny Lau, Devon Tuma
 -/
 
-import group_theory.submonoid.basic
+import group_theory.submonoid.operations
+import group_theory.submonoid.membership
 
 /-!
 # Non-zero divisors
@@ -61,5 +62,19 @@ lemma le_non_zero_divisors_of_domain {M : submonoid A}
   (hM : ↑0 ∉ M) : M ≤ non_zero_divisors A :=
 λ x hx y hy, or.rec_on (eq_zero_or_eq_zero_of_mul_eq_zero hy)
   (λ h, h) (λ h, absurd (h ▸ hx : (0 : A) ∈ M) hM)
+
+
+lemma powers_le_non_zero_divisors_of_domain {a : A} (ha : a ≠ 0) :
+  submonoid.powers a ≤ non_zero_divisors A :=
+le_non_zero_divisors_of_domain (λ h, absurd (h.rec_on (λ _ hn, pow_eq_zero hn)) ha)
+
+lemma map_le_non_zero_divisors_of_injective {B : Type*} [integral_domain B]
+  {f : A →+* B} (hf : function.injective f)
+  {M : submonoid A} (hM : M ≤ non_zero_divisors A) : M.map ↑f ≤ non_zero_divisors B :=
+begin
+  apply le_non_zero_divisors_of_domain,
+  simp only [not_exists, exists_prop, ring_hom.coe_monoid_hom, not_and, nat.cast_zero, submonoid.mem_map],
+  exact λ _ hx h0, one_ne_zero (hM hx _ (hf (by simpa using h0))),
+end
 
 end non_zero_divisors

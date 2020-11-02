@@ -154,6 +154,11 @@ begin
     { exact set.mem_insert_of_mem ⊤ ⟨map_mono hJ.1.1, hmax⟩ } },
 end
 
+lemma map_jacobson_of_bijective {f : R →+* S} (hf : function.bijective f) {I : ideal R} :
+  map f (I.jacobson) = (map f I).jacobson :=
+map_jacobson_of_surjective (hf.right)
+  (le_trans (le_of_eq (f.injective_iff_ker_eq_bot.1 hf.left)) (bot_le))
+
 lemma comap_jacobson {f : R →+* S} {K : ideal S} :
   comap f (K.jacobson) = Inf (comap f '' {J : ideal S | K ≤ J ∧ J.is_maximal}) :=
 trans (comap_Inf' f _) (Inf_eq_infi).symm
@@ -176,6 +181,31 @@ begin
     refine le_infi_iff.2 (λ J, (le_infi_iff.2 (λ hJ, _))),
     haveI : J.is_maximal := hJ.right,
     refine Inf_le ⟨comap_mono hJ.left, comap_is_maximal_of_surjective _ hf⟩ }
+end
+
+lemma mem_jacobson_bot {x : R} : x ∈ jacobson (⊥ : ideal R) ↔ ∀ y, is_unit (x * y + 1) :=
+begin
+  split,
+  {
+    contrapose!,
+    rintros ⟨y, hy⟩ h,
+    rw mem_jacobson_iff at h,
+    rcases h y with ⟨z, hz⟩,
+    refine hy (is_unit_iff_exists_inv.2 ⟨z, _⟩),
+    rw submodule.mem_bot at hz,
+    rwa [add_mul, one_mul, ← sub_eq_zero],
+  },
+  {
+    intro h,
+    rw mem_jacobson_iff,
+    intro y,
+    specialize h y,
+    rw is_unit_iff_exists_inv at h,
+    cases h with b hb,
+    use b,
+    rw [submodule.mem_bot, ← hb],
+    ring,
+  }
 end
 
 /-- An ideal `I` of `R` is equal to its Jacobson radical if and only if

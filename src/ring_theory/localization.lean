@@ -1422,6 +1422,10 @@ end
 
 open polynomial
 
+lemma mem_map_submonoid_of_mem {R S : Type*} [comm_ring R] [comm_ring S]
+  (f : R →+* S) {M : submonoid R} (x : M) : (f x) ∈ (M.map f : submonoid S) :=
+set.mem_image_of_mem f x.2
+
 /-- Given a particular witness to an element being algebraic over an algebra `R → S`,
 We can localize to a submonoid containing the leading coefficient to make it integral.
 Explicitly, the map between the localizations will be an integral ring morphism -/
@@ -1442,6 +1446,14 @@ begin
     erw [eval₂_map, localization_map.map_comp, ← hom_eval₂ _ (algebra_map R S) g.to_map x],
     exact trans (congr_arg g.to_map hp) g.to_map.map_zero }
 end
+
+theorem is_integral_localization_at_leading_coeff' {R S : Type*} [comm_ring R] [comm_ring S]
+  (x : S) (p : polynomial R) (f : R →+* S) (hf : p.eval₂ f x = 0)
+  (M : submonoid R) (hM : p.leading_coeff ∈ M)
+  {Rₘ Sₘ : Type*} [comm_ring Rₘ] [comm_ring Sₘ]
+  (ϕ : localization_map M Rₘ) (ϕ' : localization_map (M.map ↑f : submonoid S) Sₘ) :
+  (ϕ.map (mem_map_submonoid_of_mem f) ϕ').is_integral_elem (ϕ'.to_map x) :=
+@is_integral_localization_at_leading_coeff R _ M S _ Rₘ Sₘ _ _  f.to_algebra ϕ ϕ' x p hf hM
 
 /-- If `R → S` is an integral extension, `M` is a submonoid of `R`,
 `Rₘ` is the localization of `R` at `M`,
@@ -1468,10 +1480,6 @@ begin
       exact hx.symm ▸ is_integral_localization_at_leading_coeff
         f g p hp.2 (hp.1.symm ▸ M.one_mem) } }
 end
-
-lemma mem_map_submonoid_of_mem {R S : Type*} [comm_ring R] [comm_ring S]
-  (f : R →+* S) {M : submonoid R} (x : M) : (f x) ∈ (M.map f : submonoid S) :=
-set.mem_image_of_mem f x.2
 
 lemma is_integral_localization' {R S : Type*} [comm_ring R] [comm_ring S]
   {f : R →+* S} (hf : f.is_integral) (M : submonoid R) :

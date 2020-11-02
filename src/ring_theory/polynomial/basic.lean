@@ -234,7 +234,7 @@ end
 /-- If `I` is an ideal of `R`, then the ring polynomials over the quotient ring `I.quotient` is
 isomorphic to the quotient of `polynomial R` by the ideal `map C I`,
 where `map C I` contains exactly the polynomials whose coefficients all lie in `I` -/
-def polynomial_quotient_equiv_quotient_polynomial {I : ideal R} :
+def polynomial_quotient_equiv_quotient_polynomial (I : ideal R) :
   polynomial (I.quotient) ≃+* (map C I : ideal (polynomial R)).quotient :=
 { to_fun := eval₂_ring_hom
     (quotient.lift I ((quotient.mk (map C I : ideal (polynomial R))).comp C) quotient_map_C_eq_zero)
