@@ -410,6 +410,8 @@ instance map.is_semiring_hom : is_semiring_hom (map f) :=
 def map_ring_hom (f : R →+* S) : polynomial R →+* polynomial S :=
 ring_hom.of (map f)
 
+@[simp] lemma coe_map_ring_hom (f : R →+* S) : ⇑(map_ring_hom f) = map f := rfl
+
 lemma map_list_prod (L : list (polynomial R)) : L.prod.map f = (L.map $ map f).prod :=
 eq.symm $ list.prod_hom _ (monoid_hom.of (map f))
 

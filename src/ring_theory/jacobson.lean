@@ -413,15 +413,6 @@ begin
       refine absurd h2 hg0 } },
 end
 
--- Move all of the denominators of the polynomial outside essentially
-lemma clear_coeff_denominators {R S : Type*} [comm_ring R] [comm_ring S]
-  {M : submonoid R} (ϕ : localization_map M S)
-  (f : polynomial S) :
-  ∃ (f' : polynomial R) (d : M), f = (f'.map ϕ.to_map) * C (ϕ.mk' 1 d) :=
-begin
-  sorry,
-end
-
 lemma map_ring_hom_def {R S : Type*} [comm_ring R] [comm_ring S]
   (f : polynomial R) (ϕ : R →+* S) :
   (polynomial.map_ring_hom ϕ) f = f.map ϕ :=
@@ -448,22 +439,17 @@ begin
     map_le_non_zero_divisors_of_injective hφ
       (le_non_zero_divisors_of_domain (λ h0, hx (let ⟨n, hn⟩ := h0 in pow_eq_zero hn))),
   letI : integral_domain Sₘ := localization_map.integral_domain_of_le_non_zero_divisors ϕ' hM,
-
   let φ' : Rₘ →+* Sₘ := ϕ.map (mem_map_submonoid_of_mem φ) ϕ',
-
   have hϕ' : function.injective ϕ'.to_map := ϕ'.injective hM,
   rw [ring_hom.injective_iff_ker_eq_bot, ring_hom.ker_eq_comap_bot] at hϕ',
-
   have hSₘ : is_jacobson Sₘ := is_jacobson_of_is_integral' φ' hφ' (is_jacobson_localization ϕ),
   specialize hSₘ ⊥ radical_bot_of_integral_domain,
-
-  have : ∀ I : ideal Sₘ, I.is_maximal → (I.comap ϕ'.to_map).is_maximal, {
-    intros I hI,
+  have : ∀ I : ideal Sₘ, I.is_maximal → (I.comap ϕ'.to_map).is_maximal,
+  { intros I hI,
     have : (I.comap φ').is_maximal := is_maximal_comap_of_is_integral_of_is_maximal' φ' hφ' I hI,
     rw is_maximal_iff_is_maximal_disjoint ϕ at this,
     sorry,
   },
-
   refine eq_bot_iff.2 (le_trans _ (le_of_eq hϕ')),
   rw [← hSₘ, comap_jacobson],
   refine Inf_le_Inf (λ j hj, ⟨bot_le, _⟩),
@@ -472,26 +458,42 @@ begin
   exact this J hJ.1.2
 end
 
-private lemma is_jacobson_polynomial_of_domain (R : Type*) [integral_domain R] [hR : is_jacobson R] :
-  is_jacobson (polynomial R) :=
+lemma eval₂_C_X {R : Type*} [comm_ring R] (p : polynomial R) :
+  eval₂ C X p = p :=
+polynomial.induction_on' p (λ p q hp hq, by simp [hp, hq])
+  (λ n x, by rw [eval₂_monomial, monomial_eq_smul_X, C_mul'])
+
+private lemma is_jacobson_polynomial_of_domain' (R : Type*) [integral_domain R] [hR : is_jacobson R]
+  (P : ideal (polynomial R)) [P.is_prime]
+  (hP : ∀ (x : R), C x ∈ P → x = 0) :
+  P.jacobson = P :=
 begin
-  rw is_jacobson_iff_prime_eq,
-  introsI P hP,
   by_cases hP' : (P = ⊥),
-  {
-    rw hP',
+  { rw hP',
     refine jacobson_bot_polynomial_of_jacobson_bot _,
-    refine hR ⊥ radical_bot_of_integral_domain,
-  },
-  {
-    rw jacobson_eq_iff_jacobson_quotient_eq_bot,
+    refine hR ⊥ radical_bot_of_integral_domain },
+  { rw jacobson_eq_iff_jacobson_quotient_eq_bot,
     let P' : ideal R := P.comap C,
+    have : P' = ⊥ := by rwa eq_bot_iff,
+    have hP'_inj : function.injective (quotient.mk P') := by {
+      rw ring_hom.injective_iff,
+      refine λ x hx, _,
+      rw [quotient.eq_zero_iff_mem, this] at hx,
+      exact hx,
+    },
     haveI : P'.is_prime := comap_is_prime C P,
-    have : ∃ (p : polynomial R) (hp : p ∈ P), (p.map (quotient.mk P')) ≠ 0 := by {
+    have : ∃ (p : polynomial R) (hP : p ∈ P), p ≠ 0 := by {
       contrapose! hP',
-      sorry,
+      rw eq_bot_iff,
+      refine λ x hx, (hP' x hx).symm ▸ (ideal.zero_mem ⊥),
     },
     obtain ⟨p, hp, hp0⟩ := this,
+    have hp0 : (p.map (quotient.mk P')) ≠ 0 := by {
+      refine λ hp0', hp0 _,
+      rw ← leading_coeff_eq_zero at ⊢ hp0',
+      rw leading_coeff_map' hP'_inj at hp0',
+      refine hP'_inj (trans hp0' (ring_hom.map_zero _).symm),
+    },
     let x : P'.quotient := (p.map (quotient.mk P')).leading_coeff,
     have hx : x ≠ 0 := by {
       intro hx,
@@ -500,15 +502,14 @@ begin
     },
     let φ : P'.quotient →+* P.quotient := quotient.lift P' ((quotient.mk P).comp C)
        (λ a ha, by rwa [ring_hom.comp_apply, quotient.eq_zero_iff_mem]),
-    have hφ : function.injective φ := by {
-      refine λ x y hxy, _,
+    have hφ : function.injective φ,
+    { refine λ x y hxy, _,
       obtain ⟨x, rfl⟩ := quotient.mk_surjective x,
       obtain ⟨y, rfl⟩ := quotient.mk_surjective y,
       rw [← sub_eq_zero_iff_eq, ← ring_hom.map_sub, ← ring_hom.map_sub] at hxy,
       rw [quotient.lift_mk, ring_hom.comp_apply, quotient.eq_zero_iff_mem] at hxy,
       rw [← sub_eq_zero_iff_eq, ← ring_hom.map_sub, quotient.eq_zero_iff_mem],
-      exact hxy,
-    },
+      exact hxy },
     let M : submonoid P'.quotient := submonoid.powers (p.map (quotient.mk P')).leading_coeff,
     let M' : submonoid P.quotient := M.map φ,
     let ϕ : localization_map M (localization M) := localization.of M,
@@ -522,7 +523,10 @@ begin
       refine is_integral_localization_at_leading_coeff' ((quotient.mk P) X)
         (p.map (quotient.mk P')) φ
         _ M ⟨1, pow_one _⟩ _ _,
-      sorry,
+      {
+        have : φ.comp (quotient.mk P') = (quotient.mk P).comp C := rfl,
+        rwa [eval₂_map, this, ← hom_eval₂, quotient.eq_zero_iff_mem, eval₂_C_X],
+      },
     }
   }
 end
@@ -539,6 +543,13 @@ lemma mem_ideal_of_coeff_mem {R : Type*} [comm_ring R]
   (hp : ∀ (n : ℕ), C (p.coeff n) ∈ I) : p ∈ I :=
 sum_C_mul_X_eq p ▸ submodule.sum_mem I (λ n hn, I.mul_mem_right (hp n))
 
+lemma comp_injective {R S T : Type*} [comm_ring R] [comm_ring S] [comm_ring T]
+  (f : R →+* S) (g : S →+* T) (h : ∀ (r : R), (f r) ∈ g.ker → r = 0) :
+  function.injective (g.comp f) :=
+begin
+  rwa ring_hom.injective_iff,
+end
+
 -- Bootstrap the full theorem from the integral domain case
 theorem is_jacobson_polynomial_iff_is_jacobson : is_jacobson R ↔ is_jacobson (polynomial R) :=
 begin
@@ -548,8 +559,8 @@ begin
     let R' := ((quotient.mk I).comp C).range,
     let i : R →+* R' := ((quotient.mk I).comp C).range_restrict,
     let i' : polynomial R →+* polynomial R' := polynomial.map_ring_hom i,
-    have hi : function.surjective i := ((quotient.mk I).comp C).surjective_onto_range,
-    have hi'' : (polynomial.map_ring_hom i : polynomial R →+* polynomial R').ker ≤ I,
+    have hi : function.surjective (i : R → R') := ((quotient.mk I).comp C).surjective_onto_range,
+    have hi' : (polynomial.map_ring_hom i : polynomial R →+* polynomial R').ker ≤ I,
     { refine λ f hf, mem_ideal_of_coeff_mem I f (λ n, _),
       rw [← quotient.eq_zero_iff_mem, ← ring_hom.comp_apply],
       rw [ring_hom.mem_ker, map_ring_hom_def] at hf,
@@ -558,15 +569,34 @@ begin
       rwa [subtype.ext_iff, ring_hom.coe_range_restrict] at hf },
     haveI hR' : is_jacobson R' := is_jacobson_of_surjective ⟨i, hi⟩,
     let I' : ideal (polynomial R') := I.map (polynomial.map_ring_hom i),
-    haveI hI' : I'.is_prime := map_is_prime_of_surjective (polynomial_map_surjective i hi) hi'',
+    haveI : I'.is_prime := map_is_prime_of_surjective (polynomial_map_surjective i hi) hi',
+    have hI' : ∀ (x : R'), C x ∈ I' → x = 0,
+    { refine λ x hx, _,
+      induction x with x hx',
+      refine subtype.eq _,
+      simp only [subring.coe_zero, subtype.val_eq_coe],
+      obtain ⟨y, hy⟩ := (ring_hom.mem_range).1 hx',
+      rw ring_hom.comp_apply at hy,
+      rw [← hy, quotient.eq_zero_iff_mem],
+      suffices : i' (C y) ∈ I',
+      {
+        obtain ⟨f, hf⟩ := mem_image_of_mem_map_of_surjective i' sorry this,
+        have hn : (C y - f) ∈ I := hi' sorry,
+        have := I.add_mem hn hf.1,
+        sorry,
+      },
+      convert hx,
+      simp only [map_C, C_inj, coe_map_ring_hom],
+      refine subtype.eq hy },
     suffices : (I.map (polynomial.map_ring_hom i)).jacobson = (I.map (polynomial.map_ring_hom i)),
     { replace this := congr_arg (comap (polynomial.map_ring_hom i)) this,
-      rw [← map_jacobson_of_surjective _ hi'',
+      rw [← map_jacobson_of_surjective _ hi',
         comap_map_of_surjective _ _, comap_map_of_surjective _ _] at this,
       refine le_antisymm (le_trans (le_sup_left_of_le le_rfl)
-        (le_trans (le_of_eq this) (sup_le le_rfl hi''))) le_jacobson,
+        (le_trans (le_of_eq this) (sup_le le_rfl hi'))) le_jacobson,
       all_goals {exact polynomial_map_surjective i hi} },
-    refine is_jacobson_polynomial_of_domain R' I' (is_prime.radical hI') },
+    refine is_jacobson_polynomial_of_domain' R' I' hI',
+    },
   { exact is_jacobson_of_surjective ⟨eval₂_ring_hom (ring_hom.id _) 1, λ x, ⟨C x, by simp⟩⟩ }
 end
 
