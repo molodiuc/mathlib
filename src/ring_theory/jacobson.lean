@@ -370,60 +370,10 @@ lemma is_maximal_iff_quotient_is_maximal (I : ideal R) :
 ⟨λ hI, @bot_is_maximal _ (@quotient.field _ _ I hI), λ hI, (@mk_ker _ _ I) ▸
   @comap_is_maximal_of_surjective _ _ _ _ (quotient.mk I) ⊥ quotient.mk_surjective hI⟩
 
-lemma is_integral_lemma {R S : Type*} [comm_ring R] [comm_ring S]
-  (ϕ : R →+* S) (x : S) : ϕ.is_integral_elem x ↔ (@is_integral _ _ _ _ ϕ.to_algebra x) :=
-by refl
-
-lemma polynomial_map_integral {R S : Type*} [comm_ring R] [comm_ring S]
-  (ϕ : R →+* S) (hf : ϕ.is_integral) : (polynomial.map_ring_hom ϕ).is_integral :=
-begin
-  refine λ f, polynomial.induction_on f
-    (λ s, let ⟨p, hp⟩ := hf s in ⟨p.map C, monic_map C hp.1, (by rw [eval₂_map,
-      (ring_hom.ext (λ p, map_C ϕ) : (map_ring_hom ϕ).comp C = C.comp ϕ), ← hom_eval₂, hp.2, C_0])⟩)
-    (λ p q hp hq, @is_integral_add _ _ _ _ (polynomial.map_ring_hom ϕ).to_algebra p q hp hq)
-    (λ n s h, (by rw [mul_assoc, pow_add, pow_one] : (C s * X ^ n) * X = (C s * X ^ (n + 1)))
-      ▸ @is_integral_mul _ _ _ _ (polynomial.map_ring_hom ϕ).to_algebra
-      (C s * X ^ n) X h ⟨X - C X, monic_X_sub_C X, _⟩),
-  rw [eval₂_sub, eval₂_C, eval₂_X],
-  exact map_X ϕ ▸ sub_self (X.map ϕ),
-end
-
-lemma not_bot_maximal_polynomial {R : Type*} [comm_ring R] [nontrivial R] :
-  ¬ (⊥ : ideal (polynomial R)).is_maximal :=
-begin
-  refine λ h, absurd (h.right) _,
-  simp only [exists_prop, not_forall],
-  -- Remains to show ⊥ isn't maximal in polynomial ring ({X} is strictly between ⊥ and ⊤)
-  refine ⟨(ideal.span {X} : ideal (polynomial R)), _, _⟩,
-  { refine lt_of_le_of_ne bot_le _,
-    refine λ h, _,
-    have : X ∈ ideal.span {X} := submodule.mem_span_singleton_self X,
-    rw ← h at this,
-    have : X = 0 := ideal.mem_bot.mp this,
-    simpa using congr_arg (eval 1) this },
-  { refine λ h, _,
-    rw [eq_top_iff_one, mem_span_singleton'] at h,
-    obtain ⟨g, hg⟩ := h,
-    by_cases hg0 : g = 0,
-    { rw hg0 at hg,
-      simpa using hg },
-    { have h1 := congr_arg degree hg,
-      have h2 := degree_lt_degree_mul_X (hg0 : g ≠ 0),
-      rw [h1, degree_one, nat.with_bot.lt_zero_iff, degree_eq_bot] at h2,
-      refine absurd h2 hg0 } },
-end
-
 lemma map_ring_hom_def {R S : Type*} [comm_ring R] [comm_ring S]
   (f : polynomial R) (ϕ : R →+* S) :
   (polynomial.map_ring_hom ϕ) f = f.map ϕ :=
 rfl
-
-lemma submonoid_lemma {R S : Type*} [comm_ring R] [comm_ring S]
-  (f : R →+* S) (b : R) :
-  submonoid.powers (f b) = (submonoid.powers b).map ↑f :=
-le_antisymm
-  (λ x hx, let ⟨y, hy⟩ := hx in ⟨b ^ y, ⟨y, rfl⟩, by rwa [ring_hom.coe_monoid_hom, ring_hom.map_pow]⟩)
-  begin rintros x ⟨y, ⟨⟨n, hn⟩, hy⟩⟩, refine ⟨n, by rwa [← ring_hom.map_pow, hn]⟩ end
 
 lemma quotient_map_injective {R S : Type*} [comm_ring R] [comm_ring S] {I : ideal S} {f : R →+* S} :
   function.injective (quotient_map I f le_rfl) :=
