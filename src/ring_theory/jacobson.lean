@@ -254,170 +254,10 @@ begin
     ((disjoint_powers_iff_not_mem hI.2.1.is_prime.radical).2 hI.2.2) }
 end
 
-theorem is_jacobson_of_eisenbud
-  (H : ∀ (P : ideal R) [P.is_prime] (b : R) (hb : b ≠ 0) (ϕ : away_map b (localization (submonoid.powers b))),
-    (P.map ϕ.to_map).is_maximal → P.is_maximal)
-  : is_jacobson R :=
-begin
-  rw is_jacobson_iff_prime_eq,
-  refine λ Q hQ, le_antisymm (λ x hx, classical.by_contradiction (λ hx', _)) le_jacobson,
-  obtain ⟨P, ⟨hP_prime, hP, hPx⟩, hQP, h⟩ := zorn.zorn_partial_order₀
-    {P : ideal R | P.is_prime ∧ Q ≤ P ∧ x ∉ P} _ Q ⟨hQ, le_refl Q, hx'⟩,
-  { haveI : P.is_prime := hP_prime,
-    refine absurd (H P x (λ hx'', hx' (hx''.symm ▸ Q.zero_mem))
-      (localization.of (submonoid.powers x)) _ : P.is_maximal)
-      (λ hP_max, hPx ((mem_Inf.1 hx) ⟨hP, hP_max⟩)),
-    { refine ⟨(is_prime_of_is_prime_disjoint _ _ hP_prime
-        (by rwa disjoint_powers_iff_not_mem (is_prime.radical hP_prime))).1, _⟩,
-      refine maximal_of_no_maximal (λ J hJ hJ_max, _),
-      haveI hJ_prime : J.is_prime := is_maximal.is_prime hJ_max,
-      have hJp := is_maximal.is_prime hJ_max,
-      rw is_prime_iff_is_prime_disjoint (localization.of (submonoid.powers x)) at hJp,
-      have := hJp.right,
-      rw disjoint_powers_iff_not_mem (is_prime.radical (comap_is_prime _ J)) at this,
-      specialize h (comap (localization.of (submonoid.powers x)).to_map J) ⟨comap_is_prime _ J,
-        (le_trans hQP (le_trans le_comap_map (comap_mono (le_of_lt hJ)))), this⟩
-        (le_trans le_comap_map (comap_mono (le_of_lt hJ))),
-      refine hJ.2 (le_of_eq (by rw [← h, map_comap (localization.of (submonoid.powers x))])) } },
-  { intros S SC cC I IS,
-    have hxS : x ∉ Sup S := λ hxS, let ⟨J, hJ, hJxy⟩ :=
-      (submodule.mem_Sup_of_directed ⟨I, IS⟩ cC.directed_on).1 hxS in (SC hJ).2.2 hJxy,
-    refine ⟨Sup S, ⟨_, le_trans (SC IS).2.1 (le_Sup IS), hxS⟩, λ z, le_Sup⟩,
-    refine ⟨ne_of_lt ⟨le_top, λ hS, absurd (hS (by simp)) hxS⟩, λ x y hxy, _⟩,
-    obtain ⟨J, hJ, hJxy⟩ := (submodule.mem_Sup_of_directed ⟨I, IS⟩ cC.directed_on).1 hxy,
-    refine or.rec_on ((SC hJ).1.2 hJxy)
-      (λ h, or.inl ((submodule.mem_Sup_of_directed ⟨I, IS⟩ cC.directed_on).2 ⟨J, hJ, h⟩))
-      (λ h, or.inr ((submodule.mem_Sup_of_directed ⟨I, IS⟩ cC.directed_on).2 ⟨J, hJ, h⟩)) },
-end
-
-theorem is_jacobson_of_eisenbud'
-  (H : ∀ (b : R) (hb : b ≠ 0) (ϕ : away_map b (localization (submonoid.powers b)))
-    (P : ideal (localization (submonoid.powers b))) [(P.comap ϕ.to_map).is_prime],
-    P.is_maximal → (P.comap ϕ.to_map).is_maximal)
-  : is_jacobson R :=
-begin
-  rw is_jacobson_iff_prime_eq,
-  refine λ Q hQ, le_antisymm (λ x hx, classical.by_contradiction (λ hx', _)) le_jacobson,
-  obtain ⟨P, ⟨hP_prime, hP, hPx⟩, hQP, h⟩ := zorn.zorn_partial_order₀
-    {P : ideal R | P.is_prime ∧ Q ≤ P ∧ x ∉ P} _ Q ⟨hQ, le_refl Q, hx'⟩,
-  { let ϕ := localization.of (submonoid.powers x),
-    haveI : ((P.map ϕ.to_map).comap ϕ.to_map).is_prime := by rwa ϕ.comap_map_of_is_prime_disjoint
-      P hP_prime ((disjoint_powers_iff_not_mem hP_prime.radical).2 hPx),
-    refine absurd (H x (λ hx'', hx' (hx''.symm ▸ Q.zero_mem)) ϕ (P.map ϕ.to_map) _) _,
-    { refine ⟨(is_prime_of_is_prime_disjoint _ _ hP_prime
-        (by rwa disjoint_powers_iff_not_mem (is_prime.radical hP_prime))).1, _⟩,
-      refine maximal_of_no_maximal (λ J hJ hJ_max, _),
-      haveI hJ_prime : J.is_prime := is_maximal.is_prime hJ_max,
-      have hJp := is_maximal.is_prime hJ_max,
-      rw is_prime_iff_is_prime_disjoint (localization.of (submonoid.powers x)) at hJp,
-      have := hJp.right,
-      rw disjoint_powers_iff_not_mem (is_prime.radical (comap_is_prime _ J)) at this,
-      specialize h (comap (localization.of (submonoid.powers x)).to_map J) ⟨comap_is_prime _ J,
-        (le_trans hQP (le_trans le_comap_map (comap_mono (le_of_lt hJ)))), this⟩
-        (le_trans le_comap_map (comap_mono (le_of_lt hJ))),
-      refine hJ.2 (le_of_eq (by rw [← h, map_comap (localization.of (submonoid.powers x))])) },
-    { rw ϕ.comap_map_of_is_prime_disjoint P hP_prime
-        ((disjoint_powers_iff_not_mem hP_prime.radical).2 hPx),
-      exact (λ hP_max, hPx ((mem_Inf.1 hx) ⟨hP, hP_max⟩)) } },
-  { intros S SC cC I IS,
-    have hxS : x ∉ Sup S := λ hxS, let ⟨J, hJ, hJxy⟩ :=
-      (submodule.mem_Sup_of_directed ⟨I, IS⟩ cC.directed_on).1 hxS in (SC hJ).2.2 hJxy,
-    refine ⟨Sup S, ⟨_, le_trans (SC IS).2.1 (le_Sup IS), hxS⟩, λ z, le_Sup⟩,
-    refine ⟨ne_of_lt ⟨le_top, λ hS, absurd (hS (by simp)) hxS⟩, λ x y hxy, _⟩,
-    obtain ⟨J, hJ, hJxy⟩ := (submodule.mem_Sup_of_directed ⟨I, IS⟩ cC.directed_on).1 hxy,
-    refine or.rec_on ((SC hJ).1.2 hJxy)
-      (λ h, or.inl ((submodule.mem_Sup_of_directed ⟨I, IS⟩ cC.directed_on).2 ⟨J, hJ, h⟩))
-      (λ h, or.inr ((submodule.mem_Sup_of_directed ⟨I, IS⟩ cC.directed_on).2 ⟨J, hJ, h⟩)) },
-end
-
 end localization
-
 
 section polynomial
 open polynomial
-
-lemma radical_bot_of_integral_domain {R : Type u} [integral_domain R] : radical (⊥ : ideal R) = ⊥ :=
-eq_bot_iff.2 (λ x hx, hx.rec_on (λ n hn, pow_eq_zero hn))
-
-lemma jacobson_bot_polynomial_le_Inf_map_maximal :
-  jacobson (⊥ : ideal (polynomial R)) ≤ Inf (map C '' {J : ideal R | J.is_maximal}) :=
-begin
-  refine le_Inf (λ J, exists_imp_distrib.2 (λ j hj, _)),
-  haveI : j.is_maximal := hj.1,
-  refine trans (jacobson_mono bot_le) (le_of_eq _ : J.jacobson ≤ J),
-  suffices : (⊥ : ideal (polynomial j.quotient)).jacobson = ⊥,
-  { rw [← hj.2, jacobson_eq_iff_jacobson_quotient_eq_bot],
-    replace this := congr_arg (map (polynomial_quotient_equiv_quotient_polynomial j).to_ring_hom) this,
-    rwa [map_jacobson_of_bijective _, map_bot] at this,
-    exact (ring_equiv.bijective (polynomial_quotient_equiv_quotient_polynomial j)) },
-  refine eq_bot_iff.2 (λ f hf, _),
-  simpa [(λ hX, by simpa using congr_arg (λ f, coeff f 1) hX : (X : polynomial j.quotient) ≠ 0)]
-    using eq_C_of_degree_eq_zero (degree_eq_zero_of_is_unit ((mem_jacobson_bot.1 hf) X)),
-end
-
-lemma jacobson_bot_polynomial_of_jacobson_bot (h : jacobson (⊥ : ideal R) = ⊥) :
-  jacobson (⊥ : ideal (polynomial R)) = ⊥ :=
-begin
-  refine eq_bot_iff.2 (le_trans jacobson_bot_polynomial_le_Inf_map_maximal _),
-  refine (λ f hf, ((submodule.mem_bot _).2 (polynomial.ext (λ n, trans _ (coeff_zero n).symm)))),
-  suffices : f.coeff n ∈ ideal.jacobson ⊥, by rwa [h, submodule.mem_bot] at this,
-  exact mem_Inf.2 (λ j hj, (mem_map_C_iff.1 ((mem_Inf.1 hf) ⟨j, ⟨hj.2, rfl⟩⟩)) n),
-end
-
-lemma is_maximal_iff_quotient_is_maximal (I : ideal R) :
-  I.is_maximal ↔ (⊥ : ideal I.quotient).is_maximal :=
-⟨λ hI, @bot_is_maximal _ (@quotient.field _ _ I hI), λ hI, (@mk_ker _ _ I) ▸
-  @comap_is_maximal_of_surjective _ _ _ _ (quotient.mk I) ⊥ quotient.mk_surjective hI⟩
-
-lemma quotient_map_injective {R S : Type*} [comm_ring R] [comm_ring S] {I : ideal S} {f : R →+* S} :
-  function.injective (quotient_map I f le_rfl) :=
-begin
-  rw ring_hom.injective_iff,
-  refine λ a ha, _,
-  obtain ⟨r, rfl⟩ := quotient.mk_surjective a,
-  rw quotient.eq_zero_iff_mem,
-  unfold quotient_map at ha,
-  rwa [quotient.lift_mk, ring_hom.comp_apply, quotient.eq_zero_iff_mem] at ha
-end
-
-@[simp]
-lemma quotient_map_mk {R S : Type*} [comm_ring R] [comm_ring S]
-  {J : ideal R} {I : ideal S}
-  {f : R →+* S} {H : J ≤ I.comap f}
-  {x : R} : (quotient_map I f H) (quotient.mk J x) = (quotient.mk I) (f x) :=
-quotient.lift_mk _ _ _
-
-lemma surjective_localization_field {R S : Type*} [comm_ring R] [comm_ring S] {M : submonoid R}
-  {f : localization_map M S} {I : ideal S} [I.is_prime] {J : ideal R} {H : J ≤ I.comap f.to_map}
-  (hI : (I.comap f.to_map).is_maximal) :
-  function.surjective (quotient_map I f.to_map H) :=
-begin
-  intros s,
-  obtain ⟨s, rfl⟩ := quotient.mk_surjective s,
-  obtain ⟨r, ⟨m, hm⟩, rfl⟩ := f.mk'_surjective s,
-  by_cases hM : (quotient.mk (I.comap f.to_map)) m = 0,
-  { refine ⟨0, _⟩,
-    rw [quotient.eq_zero_iff_mem, mem_comap] at hM,
-    have := I.smul_mem (f.mk' 1 ⟨m, hm⟩) hM,
-    rw [smul_eq_mul, mul_comm, ← localization_map.mk'_eq_mul_mk'_one, f.mk'_self,
-      ← eq_top_iff_one] at this,
-    rw [ring_hom.map_zero, eq_comm, quotient.eq_zero_iff_mem, this],
-    exact submodule.mem_top },
-  { rw quotient.maximal_ideal_iff_is_field_quotient at hI,
-    obtain ⟨n, hn⟩ := hI.3 hM,
-    obtain ⟨rn, rfl⟩ := quotient.mk_surjective n,
-    refine ⟨(quotient.mk J) (r * rn), _⟩,
-    rw [← ring_hom.map_mul] at hn,
-    replace hn := congr_arg (quotient_map I f.to_map le_rfl) hn,
-    simp only [ring_hom.map_one, quotient_map_mk, ring_hom.map_mul] at hn,
-    rw [quotient_map_mk, ← sub_eq_zero_iff_eq, ← ring_hom.map_sub, quotient.eq_zero_iff_mem,
-      ← quotient.eq_zero_iff_mem, ring_hom.map_sub, sub_eq_zero_iff_eq,
-      localization_map.mk'_eq_mul_mk'_one],
-    simp only [mul_eq_mul_left_iff, ring_hom.map_mul],
-    refine or.inl (mul_left_cancel'
-      (λ hn, hM (quotient.eq_zero_iff_mem.2 (mem_comap.2 (quotient.eq_zero_iff_mem.1 hn))))
-      (trans hn (by rw [← ring_hom.map_mul, ← f.mk'_eq_mul_mk'_one, f.mk'_self, ring_hom.map_one]))) }
-end
 
 lemma technical_lemma {R S : Type*} [integral_domain R] [integral_domain S]
   {Rₘ Sₘ : Type*} [comm_ring Rₘ] [comm_ring Sₘ]
@@ -426,14 +266,14 @@ lemma technical_lemma {R S : Type*} [integral_domain R] [integral_domain S]
   (x : R) (hx : x ≠ 0)
   (ϕ : localization_map (submonoid.powers x) Rₘ)
   (ϕ' : localization_map ((submonoid.powers x).map φ : submonoid S) Sₘ)
-  (hφ' : (ϕ.map (mem_map_submonoid_of_mem φ) ϕ').is_integral) :
+  (hφ' : (ϕ.map ((submonoid.powers x).mem_map_of_mem (φ : R →* S)) ϕ').is_integral) :
   (⊥ : ideal S).jacobson = ⊥ :=
 begin
   have hM : ((submonoid.powers x).map φ : submonoid S) ≤ non_zero_divisors S :=
     map_le_non_zero_divisors_of_injective hφ
       (le_non_zero_divisors_of_domain (λ h0, hx (let ⟨n, hn⟩ := h0 in pow_eq_zero hn))),
   letI : integral_domain Sₘ := localization_map.integral_domain_of_le_non_zero_divisors ϕ' hM,
-  let φ' : Rₘ →+* Sₘ := ϕ.map (mem_map_submonoid_of_mem φ) ϕ',
+  let φ' : Rₘ →+* Sₘ := ϕ.map ((submonoid.powers x).mem_map_of_mem (φ : R →* S)) ϕ',
   have hϕ' : function.injective ϕ'.to_map := ϕ'.injective hM,
   rw [ring_hom.injective_iff_ker_eq_bot, ring_hom.ker_eq_comap_bot] at hϕ',
   have hSₘ : is_jacobson Sₘ := is_jacobson_of_is_integral' φ' hφ' (is_jacobson_localization ϕ),
@@ -446,7 +286,7 @@ begin
     have : (I.comap φ').is_maximal := is_maximal_comap_of_is_integral_of_is_maximal' φ' hφ' I hI,
     rw [is_maximal_iff_is_maximal_disjoint ϕ, comap_comap, hcomm, ← comap_comap] at this,
     have := this.left,
-    rw is_maximal_iff_quotient_is_maximal at this ⊢,
+    rw is_maximal_iff_bot_quotient_is_maximal at this ⊢,
 
     haveI : (I.comap ϕ'.to_map).is_prime := comap_is_prime ϕ'.to_map I,
     haveI : (I.comap φ').is_prime := comap_is_prime φ' I,
@@ -474,7 +314,7 @@ begin
     refine is_integral_tower_bot_of_is_integral' f g quotient_map_injective (hfg.symm ▸
       (ring_hom.is_integral_trans (is_integral_of_surjective' (surjective_localization_field _))
         (is_integral_quotient_of_is_integral' hφ'))),
-    rwa [comap_comap, hcomm, is_maximal_iff_quotient_is_maximal],
+    rwa [comap_comap, hcomm, is_maximal_iff_bot_quotient_is_maximal],
   },
   refine eq_bot_iff.2 (le_trans _ (le_of_eq hϕ')),
   rw [← hSₘ, comap_jacobson],
@@ -534,14 +374,14 @@ begin
     let M' : submonoid P.quotient := M.map φ,
     let ϕ : localization_map M (localization M) := localization.of M,
     let ϕ' : localization_map M' (localization M') := localization.of M',
+    let φ' : (localization M) →+* (localization M') := (ϕ.map (M.mem_map_of_mem (φ : P'.quotient →* P.quotient)) ϕ'),
     refine technical_lemma φ hφ x hx ϕ ϕ' _,
-    { suffices : (ϕ.map (mem_map_submonoid_of_mem φ) ϕ').is_integral_elem (ϕ'.to_map ((quotient.mk P) X)),
+    { suffices : φ'.is_integral_elem (ϕ'.to_map ((quotient.mk P) X)),
       { intro p,
         obtain ⟨p, q, rfl⟩ := ϕ'.mk'_surjective p,
-        suffices : (ϕ.map (mem_map_submonoid_of_mem φ) ϕ').is_integral_elem (ϕ'.to_map p),
+        suffices : φ'.is_integral_elem (ϕ'.to_map p),
         { rw ϕ'.mk'_eq_mul_mk'_one,
-          refine @is_integral_mul _ _ _ _
-            (ϕ.map (mem_map_submonoid_of_mem φ) ϕ').to_algebra _ _ this _,
+          refine @is_integral_mul _ _ _ _ φ'.to_algebra _ _ this _,
           obtain ⟨q', hq⟩ := q.2,
           refine ⟨X - C (ϕ.mk' 1 ⟨q', hq.1⟩), monic_X_sub_C _, _⟩,
           simp only [eval₂_sub, eval₂_C, eval₂_X],
@@ -554,17 +394,14 @@ begin
         refine polynomial.induction_on p _ _ _,
         { refine λ r, ⟨X - C (ϕ.to_map ((quotient.mk P') r)), monic_X_sub_C _, _⟩,
           simp only [eval₂_sub, eval₂_C, eval₂_X],
-          rw [sub_eq_zero_iff_eq, ← (ϕ.map (mem_map_submonoid_of_mem φ) ϕ').comp_apply,
-            localization_map.map_comp, ring_hom.comp_apply],
+          rw [sub_eq_zero_iff_eq, ← φ'.comp_apply, localization_map.map_comp, ring_hom.comp_apply],
           refl },
         { refine λ p q hp hq, _,
           rw [ring_hom.map_add, ring_hom.map_add],
-          exact @is_integral_add _ _ _ _
-            (ϕ.map (mem_map_submonoid_of_mem φ) ϕ').to_algebra _ _ hp hq },
+          exact @is_integral_add _ _ _ _ φ'.to_algebra _ _ hp hq },
         { refine λ n r h, _,
           rw [pow_succ X n, mul_comm X, ← mul_assoc, ring_hom.map_mul, ϕ'.to_map.map_mul],
-          exact @is_integral_mul _ _ _ _
-            (ϕ.map (mem_map_submonoid_of_mem φ) ϕ').to_algebra _ _ h this } },
+          exact @is_integral_mul _ _ _ _ φ'.to_algebra _ _ h this } },
       refine is_integral_localization_at_leading_coeff' ((quotient.mk P) X)
         (p.map (quotient.mk P')) φ _ M ⟨1, pow_one _⟩ _ _,
       rwa [eval₂_map, hφ', ← hom_eval₂, quotient.eq_zero_iff_mem, eval₂_C_X] } }

@@ -902,6 +902,41 @@ def order_iso_of_prime (f : localization_map M S) :
   map_rel_iff' := λ I I', ⟨λ h x hx, h hx, λ h, (show I.val ≤ I'.val,
     from (map_comap f I.val) ▸ (map_comap f I'.val) ▸ (ideal.map_mono h))⟩ }
 
+/-- `quotient_map` appllied to maximal ideals of a localization is `surjective`.
+  The quotient by a maximal ideal is a field, so inverses to elements already exist,
+  and the localization map necessarilly the equivalene class of the inverse in the localization -/
+lemma surjective_localization_field
+  {f : localization_map M S} {I : ideal S} [I.is_prime] {J : ideal R} {H : J ≤ I.comap f.to_map}
+  (hI : (I.comap f.to_map).is_maximal) :
+  function.surjective (quotient_map I f.to_map H) :=
+begin
+  intro s,
+  obtain ⟨s, rfl⟩ := quotient.mk_surjective s,
+  obtain ⟨r, ⟨m, hm⟩, rfl⟩ := f.mk'_surjective s,
+  by_cases hM : (quotient.mk (I.comap f.to_map)) m = 0,
+  { refine ⟨0, _⟩,
+    rw [quotient.eq_zero_iff_mem, mem_comap] at hM,
+    have := I.smul_mem (f.mk' 1 ⟨m, hm⟩) hM,
+    rw [smul_eq_mul, mul_comm, ← localization_map.mk'_eq_mul_mk'_one, f.mk'_self,
+      ← eq_top_iff_one] at this,
+    rw [ring_hom.map_zero, eq_comm, quotient.eq_zero_iff_mem, this],
+    exact submodule.mem_top },
+  { rw quotient.maximal_ideal_iff_is_field_quotient at hI,
+    obtain ⟨n, hn⟩ := hI.3 hM,
+    obtain ⟨rn, rfl⟩ := quotient.mk_surjective n,
+    refine ⟨(quotient.mk J) (r * rn), _⟩,
+    rw [← ring_hom.map_mul] at hn,
+    replace hn := congr_arg (quotient_map I f.to_map le_rfl) hn,
+    simp only [ring_hom.map_one, quotient_map_mk, ring_hom.map_mul] at hn,
+    rw [quotient_map_mk, ← sub_eq_zero_iff_eq, ← ring_hom.map_sub, quotient.eq_zero_iff_mem,
+      ← quotient.eq_zero_iff_mem, ring_hom.map_sub, sub_eq_zero_iff_eq,
+      localization_map.mk'_eq_mul_mk'_one],
+    simp only [mul_eq_mul_left_iff, ring_hom.map_mul],
+    refine or.inl (mul_left_cancel'
+      (λ hn, hM (quotient.eq_zero_iff_mem.2 (mem_comap.2 (quotient.eq_zero_iff_mem.1 hn))))
+      (trans hn (by rw [← ring_hom.map_mul, ← f.mk'_eq_mul_mk'_one, f.mk'_self, ring_hom.map_one]))) }
+end
+
 end ideals
 
 /-!
@@ -1421,10 +1456,6 @@ begin
 end
 
 open polynomial
-
--- lemma mem_map_submonoid_of_mem {R S : Type*} [comm_ring R] [comm_ring S]
---   (f : R →+* S) {M : submonoid R} (x : M) : (f x) ∈ (M.map f : submonoid S) :=
--- M.mem_map_of_mem
 
 /-- Given a particular witness to an element being algebraic over an algebra `R → S`,
 We can localize to a submonoid containing the leading coefficient to make it integral.

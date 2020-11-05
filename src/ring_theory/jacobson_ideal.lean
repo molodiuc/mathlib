@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kenny Lau, Devon Tuma
 -/
 import ring_theory.ideal.operations
+import ring_theory.polynomial.basic
 
 /-!
 # Jacobson radical
@@ -232,6 +233,36 @@ begin
 end
 
 end jacobson
+
+section polynomial
+open polynomial
+
+lemma jacobson_bot_polynomial_le_Inf_map_maximal :
+  jacobson (⊥ : ideal (polynomial R)) ≤ Inf (map C '' {J : ideal R | J.is_maximal}) :=
+begin
+  refine le_Inf (λ J, exists_imp_distrib.2 (λ j hj, _)),
+  haveI : j.is_maximal := hj.1,
+  refine trans (jacobson_mono bot_le) (le_of_eq _ : J.jacobson ≤ J),
+  suffices : (⊥ : ideal (polynomial j.quotient)).jacobson = ⊥,
+  { rw [← hj.2, jacobson_eq_iff_jacobson_quotient_eq_bot],
+    replace this := congr_arg (map (polynomial_quotient_equiv_quotient_polynomial j).to_ring_hom) this,
+    rwa [map_jacobson_of_bijective _, map_bot] at this,
+    exact (ring_equiv.bijective (polynomial_quotient_equiv_quotient_polynomial j)) },
+  refine eq_bot_iff.2 (λ f hf, _),
+  simpa [(λ hX, by simpa using congr_arg (λ f, coeff f 1) hX : (X : polynomial j.quotient) ≠ 0)]
+    using eq_C_of_degree_eq_zero (degree_eq_zero_of_is_unit ((mem_jacobson_bot.1 hf) X)),
+end
+
+lemma jacobson_bot_polynomial_of_jacobson_bot (h : jacobson (⊥ : ideal R) = ⊥) :
+  jacobson (⊥ : ideal (polynomial R)) = ⊥ :=
+begin
+  refine eq_bot_iff.2 (le_trans jacobson_bot_polynomial_le_Inf_map_maximal _),
+  refine (λ f hf, ((submodule.mem_bot _).2 (polynomial.ext (λ n, trans _ (coeff_zero n).symm)))),
+  suffices : f.coeff n ∈ ideal.jacobson ⊥, by rwa [h, submodule.mem_bot] at this,
+  exact mem_Inf.2 (λ j hj, (mem_map_C_iff.1 ((mem_Inf.1 hf) ⟨j, ⟨hj.2, rfl⟩⟩)) n),
+end
+
+end polynomial
 
 section is_local
 
