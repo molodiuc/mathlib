@@ -389,8 +389,7 @@ begin
 end
 
 lemma is_integral_tower_bot_of_is_integral' {R A B : Type*} [comm_ring R] [comm_ring A] [comm_ring B]
-  (f : R →+* A) (g : A →+* B) (hg : function.injective g)
-  (hfg : (g.comp f).is_integral) : f.is_integral :=
+  (f : R →+* A) (g : A →+* B) (hg : function.injective g) (hfg : (g.comp f).is_integral) : f.is_integral :=
 λ x, @is_integral_tower_bot_of_is_integral R A B _ _ _ g.to_algebra (g.comp f).to_algebra f.to_algebra
   (@is_scalar_tower.of_algebra_map_eq R A B _ _ _ f.to_algebra g.to_algebra (g.comp f).to_algebra
   (ring_hom.comp_apply g f))  hg x (hfg (g x))
@@ -420,8 +419,7 @@ begin
 end
 
 lemma is_integral_quotient_of_is_integral' {R S : Type*} [comm_ring R] [comm_ring S]
-  {f : R →+* S} {I : ideal S} (hf : f.is_integral) :
-  (ideal.quotient_map I f le_rfl).is_integral :=
+  {f : R →+* S} {I : ideal S} (hf : f.is_integral) : (ideal.quotient_map I f le_rfl).is_integral :=
 @is_integral_quotient_of_is_integral R S _ _ f.to_algebra I hf
 
 /-- If the integral extension `R → S` is injective, and `S` is a field, then `R` is also a field -/

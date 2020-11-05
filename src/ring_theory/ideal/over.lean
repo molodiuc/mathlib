@@ -168,8 +168,7 @@ begin
 end
 
 lemma is_maximal_comap_of_is_integral_of_is_maximal' {R S : Type*} [comm_ring R] [integral_domain S]
-  (f : R →+* S) (hf : f.is_integral)
-  (I : ideal S) (hI : I.is_maximal) : is_maximal (I.comap f) :=
+  (f : R →+* S) (hf : f.is_integral) (I : ideal S) (hI : I.is_maximal) : is_maximal (I.comap f) :=
 @is_maximal_comap_of_is_integral_of_is_maximal R _ S _ f.to_algebra hf I hI
 
 lemma integral_closure.comap_ne_bot [nontrivial R] {I : ideal (integral_closure R S)}

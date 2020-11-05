@@ -336,8 +336,7 @@ end localization
 section polynomial
 open polynomial
 
-lemma radical_bot_of_integral_domain {R : Type u} [integral_domain R]
-  : radical (⊥ : ideal R) = ⊥ :=
+lemma radical_bot_of_integral_domain {R : Type u} [integral_domain R] : radical (⊥ : ideal R) = ⊥ :=
 eq_bot_iff.2 (λ x hx, hx.rec_on (λ n hn, pow_eq_zero hn))
 
 lemma jacobson_bot_polynomial_le_Inf_map_maximal :
@@ -369,11 +368,6 @@ lemma is_maximal_iff_quotient_is_maximal (I : ideal R) :
   I.is_maximal ↔ (⊥ : ideal I.quotient).is_maximal :=
 ⟨λ hI, @bot_is_maximal _ (@quotient.field _ _ I hI), λ hI, (@mk_ker _ _ I) ▸
   @comap_is_maximal_of_surjective _ _ _ _ (quotient.mk I) ⊥ quotient.mk_surjective hI⟩
-
-lemma map_ring_hom_def {R S : Type*} [comm_ring R] [comm_ring S]
-  (f : polynomial R) (ϕ : R →+* S) :
-  (polynomial.map_ring_hom ϕ) f = f.map ϕ :=
-rfl
 
 lemma quotient_map_injective {R S : Type*} [comm_ring R] [comm_ring S] {I : ideal S} {f : R →+* S} :
   function.injective (quotient_map I f le_rfl) :=
@@ -451,40 +445,35 @@ begin
   { introsI I hI,
     have : (I.comap φ').is_maximal := is_maximal_comap_of_is_integral_of_is_maximal' φ' hφ' I hI,
     rw [is_maximal_iff_is_maximal_disjoint ϕ, comap_comap, hcomm, ← comap_comap] at this,
-    have hD := this.left,
-    rw is_maximal_iff_quotient_is_maximal at hD ⊢,
+    have := this.left,
+    rw is_maximal_iff_quotient_is_maximal at this ⊢,
+
+    haveI : (I.comap ϕ'.to_map).is_prime := comap_is_prime ϕ'.to_map I,
+    haveI : (I.comap φ').is_prime := comap_is_prime φ' I,
+    haveI : (⊥ : ideal (I.comap ϕ'.to_map).quotient).is_prime := bot_prime,
 
     let A := ((I.comap ϕ'.to_map).comap φ).quotient,
     let B := (I.comap ϕ'.to_map).quotient,
-    haveI : (I.comap ϕ'.to_map).is_prime := comap_is_prime ϕ'.to_map I,
-    haveI : (I.comap φ').is_prime := comap_is_prime φ' I,
-    haveI : (⊥ : ideal B).is_prime := bot_prime,
     let A' := (I.comap φ').quotient,
     let B' := I.quotient,
 
-    let f : A →+* B := quotient_map (I.comap ϕ'.to_map) φ le_rfl,
-    let f' : A' →+* B' := quotient_map I φ' le_rfl,
-    let g : B →+* B' := quotient_map I ϕ'.to_map le_rfl,
-    let g' : A →+* A' := quotient_map (I.comap φ') ϕ.to_map (by {
-      rw [comap_comap, comap_comap, hcomm],
-      exact le_rfl,
-    }),
+    let f := quotient_map (I.comap ϕ'.to_map) φ le_rfl,
+    let f' := quotient_map I φ' le_rfl,
+    let g := quotient_map I ϕ'.to_map le_rfl,
+    let g' : A →+* A' := quotient_map (I.comap φ') ϕ.to_map
+      (le_of_eq (trans (comap_comap φ ϕ'.to_map) (hcomm ▸ (comap_comap ϕ.to_map φ').symm))),
     have hfg : g.comp f = f'.comp g',
     { refine ring_hom.ext (λ a, _),
       obtain ⟨r, rfl⟩ := quotient.mk_surjective a,
       simp [ring_hom.comp_apply],
       congr,
       rw [← ring_hom.comp_apply, ← hcomm, ring_hom.comp_apply] },
-    have hf : function.injective f := quotient_map_injective,
-    have hg : function.injective g := quotient_map_injective,
 
-    have : (⊥ : ideal B).comap f = (⊥ : ideal A) := eq_bot_iff.2 (comap_bot_le_of_injective f hf),
-    refine is_maximal_of_is_integral_of_is_maximal_comap' f _ ⊥ (this.symm ▸ hD),
-
-    refine is_integral_tower_bot_of_is_integral' f g hg (hfg.symm ▸ _),
-    refine ring_hom.is_integral_trans _ (is_integral_quotient_of_is_integral' hφ'),
-    refine is_integral_of_surjective' _,
-    refine surjective_localization_field _,
+    refine is_maximal_of_is_integral_of_is_maximal_comap' f _ ⊥
+      ((eq_bot_iff.2 (comap_bot_le_of_injective f quotient_map_injective)).symm ▸ this),
+    refine is_integral_tower_bot_of_is_integral' f g quotient_map_injective (hfg.symm ▸
+      (ring_hom.is_integral_trans (is_integral_of_surjective' (surjective_localization_field _))
+        (is_integral_quotient_of_is_integral' hφ'))),
     rwa [comap_comap, hcomm, is_maximal_iff_quotient_is_maximal],
   },
   refine eq_bot_iff.2 (le_trans _ (le_of_eq hϕ')),
@@ -614,7 +603,7 @@ begin
     have hn : (C y - f) ∈ I := hi' _,
     have := I.add_mem hn hf.1,
     rwa sub_add_cancel (C y) f at this,
-    rw [ring_hom.mem_ker, ring_hom.map_sub, hf.2, sub_eq_zero_iff_eq, map_ring_hom_def] },
+    rw [ring_hom.mem_ker, ring_hom.map_sub, hf.2, sub_eq_zero_iff_eq, coe_map_ring_hom] },
   convert hx,
   simp only [map_C, C_inj, coe_map_ring_hom],
   refine subtype.eq hy
@@ -634,7 +623,7 @@ begin
     have hi' : (polynomial.map_ring_hom i : polynomial R →+* polynomial R').ker ≤ I,
     { refine λ f hf, mem_ideal_of_coeff_mem I f (λ n, _),
       rw [← quotient.eq_zero_iff_mem, ← ring_hom.comp_apply],
-      rw [ring_hom.mem_ker, map_ring_hom_def] at hf,
+      rw [ring_hom.mem_ker, coe_map_ring_hom] at hf,
       replace hf := congr_arg (λ (f : polynomial R'), f.coeff n) hf,
       simp only [coeff_map, coeff_zero] at hf,
       rwa [subtype.ext_iff, ring_hom.coe_range_restrict] at hf },

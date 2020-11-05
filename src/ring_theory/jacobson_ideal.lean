@@ -184,29 +184,10 @@ begin
 end
 
 lemma mem_jacobson_bot {x : R} : x ∈ jacobson (⊥ : ideal R) ↔ ∀ y, is_unit (x * y + 1) :=
-begin
-  split,
-  {
-    contrapose!,
-    rintros ⟨y, hy⟩ h,
-    rw mem_jacobson_iff at h,
-    rcases h y with ⟨z, hz⟩,
-    refine hy (is_unit_iff_exists_inv.2 ⟨z, _⟩),
-    rw submodule.mem_bot at hz,
-    rwa [add_mul, one_mul, ← sub_eq_zero],
-  },
-  {
-    intro h,
-    rw mem_jacobson_iff,
-    intro y,
-    specialize h y,
-    rw is_unit_iff_exists_inv at h,
-    cases h with b hb,
-    use b,
-    rw [submodule.mem_bot, ← hb],
-    ring,
-  }
-end
+⟨λ hx y, let ⟨z, hz⟩ := (mem_jacobson_iff.1 hx) y in
+  is_unit_iff_exists_inv.2 ⟨z, by rwa [add_mul, one_mul, ← sub_eq_zero_iff_eq]⟩,
+λ h, mem_jacobson_iff.mpr (λ y, (let ⟨b, hb⟩ := is_unit_iff_exists_inv.1 (h y) in
+  ⟨b, (submodule.mem_bot R).2 (hb ▸ (by ring))⟩))⟩
 
 /-- An ideal `I` of `R` is equal to its Jacobson radical if and only if
 the Jacobson radical of the quotient ring `R/I` is the zero ideal -/

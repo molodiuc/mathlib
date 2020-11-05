@@ -407,6 +407,7 @@ instance map.is_semiring_hom : is_semiring_hom (map f) :=
   map_add := λ _ _, eval₂_add _ _,
   map_mul := λ _ _, map_mul f, }
 
+/-- `polynomial.map` as a `ring_hom` -/
 def map_ring_hom (f : R →+* S) : polynomial R →+* polynomial S :=
 ring_hom.of (map f)
 
