@@ -86,6 +86,10 @@ begin
   convert (@finsupp.mul_sum _ _ _ _ _ (g s) p (λ i a, (g a * x ^ i))).symm,
 end
 
+@[simp] lemma eval₂_C_X : eval₂ C X p = p :=
+polynomial.induction_on' p (λ p q hp hq, by simp [hp, hq])
+  (λ n x, by rw [eval₂_monomial, monomial_eq_smul_X, C_mul'])
+
 instance eval₂.is_add_monoid_hom : is_add_monoid_hom (eval₂ f x) :=
 { map_zero := eval₂_zero _ _, map_add := λ _ _, eval₂_add _ _ }
 
@@ -362,9 +366,13 @@ begin
   { intros n r, simp, }
 end
 
-lemma map_injective (hf : function.injective f): function.injective (map f) :=
+lemma map_injective (hf : function.injective f) : function.injective (map f) :=
 λ p q h, ext $ λ m, hf $ by rw [← coeff_map f, ← coeff_map f, h]
 
+lemma map_surjective (hf : function.surjective f) : (function.surjective (map f)) :=
+λ p, polynomial.induction_on' p
+  (λ p q hp hq, let ⟨p', hp'⟩ := hp in let ⟨q', hq'⟩ := hq in ⟨p' + q', by rw [map_add f, hp', hq']⟩)
+  (λ n s, let ⟨r, hr⟩ := hf s in ⟨monomial n r, by rw [map_monomial f, hr]⟩)
 
 variables {f}
 

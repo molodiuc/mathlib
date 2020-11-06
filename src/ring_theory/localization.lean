@@ -6,6 +6,7 @@ Authors: Kenny Lau, Mario Carneiro, Johan Commelin, Amelia Livingston
 
 import data.equiv.ring
 import group_theory.monoid_localization
+import ring_theory.ideal.operations
 import ring_theory.algebraic
 import ring_theory.integral_closure
 import ring_theory.non_zero_divisors
@@ -905,35 +906,33 @@ def order_iso_of_prime (f : localization_map M S) :
 /-- `quotient_map` appllied to maximal ideals of a localization is `surjective`.
   The quotient by a maximal ideal is a field, so inverses to elements already exist,
   and the localization map necessarilly the equivalene class of the inverse in the localization -/
-lemma surjective_localization_field
-  {f : localization_map M S} {I : ideal S} [I.is_prime] {J : ideal R} {H : J ≤ I.comap f.to_map}
-  (hI : (I.comap f.to_map).is_maximal) :
-  function.surjective (quotient_map I f.to_map H) :=
+lemma surjective_quotient_map_of_maximal_of_localization {f : localization_map M S} {I : ideal S}
+  [I.is_prime] {J : ideal R} {H : J ≤ I.comap f.to_map} (hI : (I.comap f.to_map).is_maximal) :
+  function.surjective (I.quotient_map f.to_map H) :=
 begin
   intro s,
-  obtain ⟨s, rfl⟩ := quotient.mk_surjective s,
+  obtain ⟨s, rfl⟩ := ideal.quotient.mk_surjective s,
   obtain ⟨r, ⟨m, hm⟩, rfl⟩ := f.mk'_surjective s,
-  by_cases hM : (quotient.mk (I.comap f.to_map)) m = 0,
-  { refine ⟨0, _⟩,
-    rw [quotient.eq_zero_iff_mem, mem_comap] at hM,
+  by_cases hM : (ideal.quotient.mk (I.comap f.to_map)) m = 0,
+  { refine ⟨0, eq_comm.1 _⟩,
+    rw [ideal.quotient.eq_zero_iff_mem, ideal.mem_comap] at hM,
     have := I.smul_mem (f.mk' 1 ⟨m, hm⟩) hM,
-    rw [smul_eq_mul, mul_comm, ← localization_map.mk'_eq_mul_mk'_one, f.mk'_self,
-      ← eq_top_iff_one] at this,
-    rw [ring_hom.map_zero, eq_comm, quotient.eq_zero_iff_mem, this],
-    exact submodule.mem_top },
-  { rw quotient.maximal_ideal_iff_is_field_quotient at hI,
+    rw [smul_eq_mul, mul_comm, ← f.mk'_eq_mul_mk'_one, f.mk'_self, ← ideal.eq_top_iff_one] at this,
+    simp [ideal.quotient.eq_zero_iff_mem, this] },
+  { rw ideal.quotient.maximal_ideal_iff_is_field_quotient at hI,
     obtain ⟨n, hn⟩ := hI.3 hM,
-    obtain ⟨rn, rfl⟩ := quotient.mk_surjective n,
-    refine ⟨(quotient.mk J) (r * rn), _⟩,
-    rw [← ring_hom.map_mul] at hn,
-    replace hn := congr_arg (quotient_map I f.to_map le_rfl) hn,
-    simp only [ring_hom.map_one, quotient_map_mk, ring_hom.map_mul] at hn,
-    rw [quotient_map_mk, ← sub_eq_zero_iff_eq, ← ring_hom.map_sub, quotient.eq_zero_iff_mem,
-      ← quotient.eq_zero_iff_mem, ring_hom.map_sub, sub_eq_zero_iff_eq,
-      localization_map.mk'_eq_mul_mk'_one],
+    obtain ⟨rn, rfl⟩ := ideal.quotient.mk_surjective n,
+    refine ⟨(ideal.quotient.mk J) (r * rn), _⟩,
+    -- The rest of the proof is essentially just algebraic manipulations to prove the equality
+    rw ← ring_hom.map_mul at hn,
+    replace hn := congr_arg (ideal.quotient_map I f.to_map le_rfl) hn,
+    simp only [ring_hom.map_one, ideal.quotient_map_mk, ring_hom.map_mul] at hn,
+    rw [ideal.quotient_map_mk, ← sub_eq_zero_iff_eq, ← ring_hom.map_sub,
+      ideal.quotient.eq_zero_iff_mem, ← ideal.quotient.eq_zero_iff_mem, ring_hom.map_sub,
+      sub_eq_zero_iff_eq, localization_map.mk'_eq_mul_mk'_one],
     simp only [mul_eq_mul_left_iff, ring_hom.map_mul],
     refine or.inl (mul_left_cancel'
-      (λ hn, hM (quotient.eq_zero_iff_mem.2 (mem_comap.2 (quotient.eq_zero_iff_mem.1 hn))))
+      (λ hn, hM (ideal.quotient.eq_zero_iff_mem.2 (ideal.mem_comap.2 (ideal.quotient.eq_zero_iff_mem.1 hn))))
       (trans hn (by rw [← ring_hom.map_mul, ← f.mk'_eq_mul_mk'_one, f.mk'_self, ring_hom.map_one]))) }
 end
 
