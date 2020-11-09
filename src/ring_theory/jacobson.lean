@@ -264,9 +264,10 @@ open polynomial
 
 /-- If `f : R → S` descends to an integral map in the localization at `x`,
   and `R` is a jacobson ring, then the intersection of all maximal ideals in `S` is empty -/
-lemma technical_lemma {R S : Type*} [integral_domain R] [integral_domain S] {Rₘ Sₘ : Type*}
-  [comm_ring Rₘ] [comm_ring Sₘ] [is_jacobson R] (φ : R →+* S) (hφ : function.injective φ)
-  (x : R) (hx : x ≠ 0) (ϕ : localization_map (submonoid.powers x) Rₘ)
+lemma jacobson_bot_of_integral_localization {R S : Type*} [integral_domain R] [integral_domain S]
+  {Rₘ Sₘ : Type*} [comm_ring Rₘ] [comm_ring Sₘ] [is_jacobson R]
+  (φ : R →+* S) (hφ : function.injective φ) (x : R) (hx : x ≠ 0)
+  (ϕ : localization_map (submonoid.powers x) Rₘ)
   (ϕ' : localization_map ((submonoid.powers x).map φ : submonoid S) Sₘ)
   (hφ' : (ϕ.map ((submonoid.powers x).mem_map_of_mem (φ : R →* S)) ϕ').is_integral) :
   (⊥ : ideal S).jacobson = ⊥ :=
@@ -276,7 +277,6 @@ begin
       (le_non_zero_divisors_of_domain (λ h0, hx (let ⟨n, hn⟩ := h0 in pow_eq_zero hn))),
   letI : integral_domain Sₘ := localization_map.integral_domain_of_le_non_zero_divisors ϕ' hM,
   let φ' : Rₘ →+* Sₘ := ϕ.map ((submonoid.powers x).mem_map_of_mem (φ : R →* S)) ϕ',
-  have hcomm: φ'.comp ϕ.to_map = ϕ'.to_map.comp φ := ϕ.map_comp _,
   suffices : ∀ I : ideal Sₘ, I.is_maximal → (I.comap ϕ'.to_map).is_maximal,
   { have hϕ' : comap ϕ'.to_map ⊥ = ⊥ :=
     by simpa [ring_hom.injective_iff_ker_eq_bot, ring_hom.ker_eq_comap_bot] using (ϕ'.injective hM),
@@ -289,6 +289,7 @@ begin
   haveI : (I.comap ϕ'.to_map).is_prime := comap_is_prime ϕ'.to_map I,
   haveI : (I.comap φ').is_prime := comap_is_prime φ' I,
   haveI : (⊥ : ideal (I.comap ϕ'.to_map).quotient).is_prime := bot_prime,
+  have hcomm: φ'.comp ϕ.to_map = ϕ'.to_map.comp φ := ϕ.map_comp _,
   let f := quotient_map (I.comap ϕ'.to_map) φ le_rfl,
   let f' := quotient_map I φ' le_rfl,
   let g := quotient_map I ϕ'.to_map le_rfl,
@@ -302,12 +303,12 @@ begin
   rw is_maximal_iff_bot_quotient_is_maximal at this ⊢,
   refine is_maximal_of_is_integral_of_is_maximal_comap' f _ ⊥
     ((eq_bot_iff.2 (comap_bot_le_of_injective f quotient_map_injective)).symm ▸ this),
-  refine is_integral_tower_bot_of_is_integral' f g quotient_map_injective
+  exact is_integral_tower_bot_of_is_integral' f g quotient_map_injective
     ((comp_quotient_map_eq_of_comp_eq hcomm I).symm ▸
     (ring_hom.is_integral_trans (is_integral_of_surjective'
-      (localization_map.surjective_quotient_map_of_maximal_of_localization _))
+      (localization_map.surjective_quotient_map_of_maximal_of_localization
+      (by rwa [comap_comap, hcomm, is_maximal_iff_bot_quotient_is_maximal])))
       (is_integral_quotient_of_is_integral' hφ'))),
-  rwa [comap_comap, hcomm, is_maximal_iff_bot_quotient_is_maximal],
 end
 
 /-- Used to bootstrap the proof of `is_jacobson_polynomial_iff_is_jacobson`.
@@ -336,7 +337,7 @@ begin
     let ϕ' : localization_map (M.map ↑φ) (localization (M.map ↑φ)) := localization.of (M.map ↑φ),
     let φ' : (localization M) →+* (localization (M.map ↑φ)) :=
       (ϕ.map (M.mem_map_of_mem (φ : P'.quotient →* P.quotient)) ϕ'),
-    refine technical_lemma φ hφ (p.map (quotient.mk P')).leading_coeff
+    refine jacobson_bot_of_integral_localization φ hφ (p.map (quotient.mk P')).leading_coeff
        (λ hx, hp0 (leading_coeff_eq_zero.1 hx)) ϕ ϕ' _,
     suffices : φ'.is_integral_elem (ϕ'.to_map ((quotient.mk P) X)),
     { intro p,
@@ -397,7 +398,8 @@ end
 
 /-- General form of the nullstellensatz for jacobson rings, since in a jacobson ring we have
   `Inf {P maximal | P ≥ I} = Inf {P prime | P ≥ I} = I.radical`. Fields are always jacobson,
-  and in that special case this is (most of) the classical nullstellensata -/
+  and in that special case this is (most of) the classical nullstellensatz,
+  since `I(V(I))` is the intersection of maximal ideals containing `I`, which is then `I.radical` -/
 lemma is_jacobson_mv_polynomial (H : is_jacobson R) (n : ℕ) :
   is_jacobson (mv_polynomial (fin n) R) :=
 nat.rec_on n

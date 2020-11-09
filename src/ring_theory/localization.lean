@@ -905,7 +905,7 @@ def order_iso_of_prime (f : localization_map M S) :
 
 /-- `quotient_map` appllied to maximal ideals of a localization is `surjective`.
   The quotient by a maximal ideal is a field, so inverses to elements already exist,
-  and the localization map necessarilly the equivalene class of the inverse in the localization -/
+  and the localization necessarilly maps the equivalene class of the inverse in the localization -/
 lemma surjective_quotient_map_of_maximal_of_localization {f : localization_map M S} {I : ideal S}
   [I.is_prime] {J : ideal R} {H : J ≤ I.comap f.to_map} (hI : (I.comap f.to_map).is_maximal) :
   function.surjective (I.quotient_map f.to_map H) :=
@@ -914,11 +914,12 @@ begin
   obtain ⟨s, rfl⟩ := ideal.quotient.mk_surjective s,
   obtain ⟨r, ⟨m, hm⟩, rfl⟩ := f.mk'_surjective s,
   by_cases hM : (ideal.quotient.mk (I.comap f.to_map)) m = 0,
-  { refine ⟨0, eq_comm.1 _⟩,
-    rw [ideal.quotient.eq_zero_iff_mem, ideal.mem_comap] at hM,
-    have := I.smul_mem (f.mk' 1 ⟨m, hm⟩) hM,
-    rw [smul_eq_mul, mul_comm, ← f.mk'_eq_mul_mk'_one, f.mk'_self, ← ideal.eq_top_iff_one] at this,
-    simp [ideal.quotient.eq_zero_iff_mem, this] },
+  { have : I = ⊤,
+    { rw ideal.eq_top_iff_one,
+      rw [ideal.quotient.eq_zero_iff_mem, ideal.mem_comap] at hM,
+      convert I.smul_mem (f.mk' 1 ⟨m, hm⟩) hM,
+      rw [smul_eq_mul, mul_comm, ← f.mk'_eq_mul_mk'_one, f.mk'_self] },
+    exact ⟨0, eq_comm.1 (by simp [ideal.quotient.eq_zero_iff_mem, this])⟩ },
   { rw ideal.quotient.maximal_ideal_iff_is_field_quotient at hI,
     obtain ⟨n, hn⟩ := hI.3 hM,
     obtain ⟨rn, rfl⟩ := ideal.quotient.mk_surjective n,
@@ -931,9 +932,9 @@ begin
       ideal.quotient.eq_zero_iff_mem, ← ideal.quotient.eq_zero_iff_mem, ring_hom.map_sub,
       sub_eq_zero_iff_eq, localization_map.mk'_eq_mul_mk'_one],
     simp only [mul_eq_mul_left_iff, ring_hom.map_mul],
-    refine or.inl (mul_left_cancel'
-      (λ hn, hM (ideal.quotient.eq_zero_iff_mem.2 (ideal.mem_comap.2 (ideal.quotient.eq_zero_iff_mem.1 hn))))
-      (trans hn (by rw [← ring_hom.map_mul, ← f.mk'_eq_mul_mk'_one, f.mk'_self, ring_hom.map_one]))) }
+    exact or.inl (mul_left_cancel' (λ hn, hM (ideal.quotient.eq_zero_iff_mem.2
+      (ideal.mem_comap.2 (ideal.quotient.eq_zero_iff_mem.1 hn)))) (trans hn
+      (by rw [← ring_hom.map_mul, ← f.mk'_eq_mul_mk'_one, f.mk'_self, ring_hom.map_one]))) }
 end
 
 end ideals

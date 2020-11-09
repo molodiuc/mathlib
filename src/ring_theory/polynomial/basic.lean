@@ -179,6 +179,7 @@ variables {R : Type u} {σ : Type v} {M : Type w} [comm_ring R] [add_comm_group 
 namespace ideal
 open polynomial
 
+/-- If every coefficient of a polynomial is in an ideal `I`, then so is the polynomial itself -/
 lemma polynomial_mem_ideal_of_coeff_mem_ideal (I : ideal (polynomial R)) (p : polynomial R)
   (hp : ∀ (n : ℕ), (p.coeff n) ∈ I.comap C) : p ∈ I :=
 sum_C_mul_X_eq p ▸ submodule.sum_mem I (λ n hn, I.mul_mem_right (hp n))
@@ -265,29 +266,28 @@ def polynomial_quotient_equiv_quotient_polynomial (I : ideal R) :
   end,
 }
 
-lemma eq_zero_of_polynomial_mem_map_range (I : ideal (polynomial R)) [hI : I.is_prime]
+/-- Given any ring `R` and an ideal `I` of `polynomial R`, we get a map `R → R[x] → R[x]/I`.
+  If we let `R` be the image of `R` in `R[x]/I` then we also have a map `R[x] → R'[x]`.
+  In particular we can map `I` across this map, to get `I'` and a new map `R' → R'[x] → R'[x]/I`.
+  This theorem shows `I'` will not contain any non-zero constant polynomials
+  -/
+lemma eq_zero_of_polynomial_mem_map_range (I : ideal (polynomial R))
   (hi' : (polynomial.map_ring_hom ((quotient.mk I).comp C).range_restrict).ker ≤ I)
   (x : ((quotient.mk I).comp C).range)
   (hx : C x ∈ (I.map (polynomial.map_ring_hom ((quotient.mk I).comp C).range_restrict))) :
   x = 0 :=
 begin
-  let R' := ((quotient.mk I).comp C).range,
-  let i : R →+* R' := ((quotient.mk I).comp C).range_restrict,
-  induction x with x hx',
+  let i := ((quotient.mk I).comp C).range_restrict,
+  obtain ⟨x, hx'⟩ := x,
+  obtain ⟨y, rfl⟩ := (ring_hom.mem_range).1 hx',
   refine subtype.eq _,
-  simp only [subring.coe_zero, subtype.val_eq_coe],
-  obtain ⟨y, hy⟩ := (ring_hom.mem_range).1 hx',
-  rw [← hy, ring_hom.comp_apply, quotient.eq_zero_iff_mem],
-  suffices : (polynomial.map i) (C y) ∈ (I.map (polynomial.map_ring_hom i)),
+  simp only [ring_hom.comp_apply, quotient.eq_zero_iff_mem, subring.coe_zero, subtype.val_eq_coe],
+  suffices : C (i y) ∈ (I.map (polynomial.map_ring_hom i)),
   { obtain ⟨f, hf⟩ := mem_image_of_mem_map_of_surjective (polynomial.map_ring_hom i)
       (polynomial.map_surjective _ (((quotient.mk I).comp C).surjective_onto_range)) this,
-    have hn : (C y - f) ∈ I := hi' _,
-    have := I.add_mem hn hf.1,
-    rwa sub_add_cancel (C y) f at this,
-    rw [ring_hom.mem_ker, ring_hom.map_sub, hf.2, sub_eq_zero_iff_eq, coe_map_ring_hom] },
-  convert hx,
-  simp only [map_C, C_inj, coe_map_ring_hom],
-  refine subtype.eq hy
+    refine sub_add_cancel (C y) f ▸ I.add_mem (hi' _ : (C y - f) ∈ I) hf.1,
+    rw [ring_hom.mem_ker, ring_hom.map_sub, hf.2, sub_eq_zero_iff_eq, coe_map_ring_hom, map_C] },
+  exact hx,
 end
 
 /-- Transport an ideal of `R[X]` to an `R`-submodule of `R[X]`. -/
