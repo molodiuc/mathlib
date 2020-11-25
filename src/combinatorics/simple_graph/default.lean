@@ -1,6 +1,3 @@
 import combinatorics.simple_graph.basic
-import combinatorics.simple_graph.hom
-import combinatorics.simple_graph.subgraph
 import combinatorics.simple_graph.simple_graph_on
-import combinatorics.simple_graph.walks
-import combinatorics.simple_graph.degree_sum
+import combinatorics.simple_graph.adj_matrix
